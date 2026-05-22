@@ -1,0 +1,22 @@
+# Dữ liệu dự án (Bỏ qua các file dữ liệu nặng để tránh vượt giới hạn GitHub)
+data/raw/*
+!data/raw/.gitkeep
+
+data/processed/*
+!data/processed/.gitkeep
+
+# File mô hình ngẫu nhiên (nặng ~7.4 MB có thể đẩy hoặc bỏ qua tùy nhu cầu)
+# Nếu muốn lưu trữ mô hình trên GitHub LFS hoặc Git, bạn có thể comment dòng dưới
+models/random_forest_model.pkl
+
+# Các thư mục tạm thời của Python và Jupyter
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+.DS_Store
+.virtualenv/
+env/
+venv/
+.env
+.venv
