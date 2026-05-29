@@ -1,6 +1,4 @@
 # 💳 Phát hiện Gian lận Thẻ Tín dụng (Credit Card Fraud Detection)
-> [!NOTE]  
-> Dự án nghiên cứu ứng dụng Học máy (Machine Learning), Học sâu (Deep Learning) và Trí tuệ nhân tạo có thể giải thích (Explainable AI - XAI) trong việc phát hiện các giao dịch gian lận thẻ tín dụng. Hệ thống giải quyết bài toán mất cân bằng lớp nghiêm trọng (chỉ **0.17%** giao dịch gian lận) thông qua thuật toán **SMOTE**, so sánh hiệu năng của **8 cấu hình mô hình**, và giải thích quyết định bằng phương pháp **SHAP** kết hợp ứng dụng Web Dashboard phân tích thời gian thực.
 ---
 ## 📂 Cấu trúc Thư mục Dự án
 ```text
