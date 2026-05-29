@@ -1,6 +1,6 @@
-# 💳 Phát hiện Gian lận Thẻ Tín dụng (Credit Card Fraud Detection)
+# Phát hiện Gian lận Thẻ Tín dụng (Credit Card Fraud Detection)
 ---
-## 📂 Cấu trúc Thư mục Dự án
+## Cấu trúc Thư mục Dự án
 ```text
 ├── data/                       # Thư mục chứa dữ liệu dự án
 │   ├── raw/                    # Chứa dữ liệu gốc (creditcard.csv)
@@ -24,7 +24,7 @@
 └── README.md                   # Tài liệu hướng dẫn dự án (File này)
 ```
 ---
-## 🛠️ Phương pháp Tiếp cận Lõi (Master Pipeline)
+## Phương pháp Tiếp cận Lõi (Master Pipeline)
 Dự án áp dụng quy trình xử lý dữ liệu chuẩn hóa công nghiệp, đảm bảo tính đồng bộ tuyệt đối giữa mô hình huấn luyện và hệ thống chạy thực tế (Production):
 ### 1. Đồng bộ hóa Scaling riêng biệt (Separate Scaling)
 *   Để chống rò rỉ thông tin dữ liệu (Data Leakage) và phục vụ tốt nhất cho giao diện Web Dashboard, hai đặc trưng vật lý duy nhất chưa ẩn danh là `Time` và `Amount` được chuẩn hóa độc lập bằng hai bộ chuẩn hóa riêng biệt: **`scaler_amount`** và **`scaler_time`** (`StandardScaler`).
@@ -38,12 +38,12 @@ Dự án áp dụng quy trình xử lý dữ liệu chuẩn hóa công nghiệp,
 *   **Global Interpretability (Toàn cục):** Đánh giá các biến số đóng vai trò quyết định cấu trúc mô hình qua biểu đồ **Summary Dot Plot** và **Bar Plot** (với $V_{14}$, $V_{17}$ là các biến tác động mạnh nhất).
 *   **Local Interpretability (Cục bộ):** Trực quan hóa chi tiết từng giao dịch đơn lẻ bị mô hình phán quyết là gian lận qua biểu đồ **Waterfall Plot** và **Force Plot** tương tác, chỉ rõ lực đẩy tăng/giảm xác suất rủi ro.
 ---
-## 📈 Kết quả Đánh giá Mô hình trên tập kiểm thử (Test Set)
+## Kết quả Đánh giá Mô hình trên tập kiểm thử (Test Set)
 Khi áp dụng SMOTE, hiệu năng phát hiện gian lận (đặc biệt là chỉ số F1-Score của lớp Gian lận và ROC-AUC) được cải thiện vượt trội:
 *   **Random Forest (SMOTE):** Đạt khả năng tổng quát hóa cao nhất, giữ chỉ số F1-Score cực tốt đồng thời giảm thiểu báo động giả.
 *   **1D-CNN (SMOTE):** Có tốc độ học và trích xuất đặc trưng không gian siêu việt nhờ các lớp Convolutional, đạt F1-Score và AUC tối ưu khi dữ liệu được cân bằng hoàn hảo.
 ---
-## 💻 Hướng dẫn Cài đặt & Chạy Dự án
+## Hướng dẫn Cài đặt & Chạy Dự án
 ### Bước 1: Cài đặt môi trường
 Đảm bảo bạn đã cài đặt Python 3.8+ và các thư viện cần thiết bằng lệnh:
 ```bash
