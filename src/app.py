@@ -2,8 +2,6 @@ import os
 import sys
 import logging
 import html
-import textwrap
-from urllib.parse import quote_plus
 import joblib
 import numpy as np
 import pandas as pd
@@ -90,14 +88,6 @@ div.stButton > button:hover {
     box-shadow: 0 10px 15px -3px rgba(10, 37, 64, 0.2) !important;
     background: linear-gradient(135deg, #1E3A8A 0%, #0A2540 100%) !important;
 }
-.card {
-    background-color: #ffffff;
-    border-radius: 12px;
-    padding: 24px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-    margin-bottom: 20px;
-}
 .result-card-normal {
     padding: 20px;
     background-color: #ECFDF5;
@@ -125,23 +115,6 @@ div.stButton > button:hover {
 .result-desc {
     font-size: 1rem;
     line-height: 1.5;
-}
-.comparison-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-.comparison-table th {
-    background-color: #F9FAFB;
-    color: #374151;
-    font-weight: 600;
-    padding: 12px;
-    text-align: left;
-    border-bottom: 2px solid #E5E7EB;
-}
-.comparison-table td {
-    padding: 12px;
-    border-bottom: 1px solid #E5E7EB;
 }
 [data-testid="stSidebar"]{min-width:260px !important;max-width:260px !important;width:260px !important;overflow:hidden !important;display:none !important;}
 [data-testid="stSidebar"] [data-testid="stSidebarUserContent"]{overflow-y:hidden !important;overflow-x:hidden !important;}
@@ -174,122 +147,281 @@ div[data-testid="stTabs"] {
     margin-top: -30px !important;
 }
 
-/* Sơ đồ quy trình ngang (Horizontal Workflow Diagram) */
-.flow-diagram-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #0A2540;
-    padding: 15px 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-}
-.flow-diagram-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex: 1;
-    min-width: 80px;
-    text-align: center;
-    position: relative;
-}
-.flow-diagram-icon {
-    width: 42px;
-    height: 42px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #ffffff;
-    font-size: 1.1rem;
-    transition: all 0.3s ease;
-    margin-bottom: 6px;
-}
-.flow-diagram-step:hover .flow-diagram-icon {
-    background: #1E3A8A;
-    border-color: #3B82F6;
-    transform: scale(1.1);
-    box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
-}
-.flow-diagram-label {
-    font-size: 0.70rem;
-    color: #9CA3AF;
-    font-weight: 600;
-}
-.flow-diagram-step.active .flow-diagram-icon {
-    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-    border-color: #34D399;
-    box-shadow: 0 0 10px rgba(52, 211, 153, 0.4);
-}
-.flow-diagram-step.active .flow-diagram-label {
-    color: #34D399;
-}
-.flow-diagram-arrow {
-    color: rgba(255, 255, 255, 0.3);
-    font-size: 0.9rem;
-    padding: 0 5px;
-    animation: flowPulse 2s infinite;
-}
-@keyframes flowPulse {
-    0% { opacity: 0.3; }
-    50% { opacity: 1; }
-    100% { opacity: 0.3; }
+/* Keep long transaction details compact and scrollable inside the dialog. */
+div[data-testid="stDialog"] div[role="dialog"] {
+    max-height: 68vh !important;
+    overflow-y: auto !important;
 }
 
-/* Thẻ dòng timeline dọc (Vertical Timeline Card Style) */
-.timeline-card {
-    background: #ffffff;
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin-bottom: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    position: relative;
-    border-left: 5px solid #1E3A8A;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.timeline-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-}
-.timeline-card.success-border {
-    border-left-color: #10B981;
-}
-.timeline-card.danger-border {
-    border-left-color: #EF4444;
-}
-.timeline-card-title {
-    font-size: 0.98rem;
-    font-weight: 700;
-    color: #0A2540;
-    margin-bottom: 8px;
-    display: flex;
+.inference-decision-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    margin: 14px 0 10px;
 }
-.timeline-card-content {
-    font-size: 0.84rem;
-    color: #4B5563;
-    line-height: 1.45;
+.inference-metric-box {
+    border: 1px solid #BFDBFE;
+    border-radius: 10px;
+    background: #EFF6FF;
+    padding: 10px;
+    text-align: center;
 }
-.timeline-badge-value {
-    background: #F3F4F6;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-family: monospace;
-    font-weight: 600;
-    color: #111827;
+.inference-metric-box.threshold {
+    border-color: #DDD6FE;
+    background: #F5F3FF;
+}
+.inference-metric-label {
+    color: #64748B;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.inference-metric-value {
+    color: #1E3A8A;
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin-top: 2px;
+}
+.inference-operator {
+    color: #475569;
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+.inference-risk-track {
+    position: relative;
+    height: 14px;
+    overflow: visible;
+    border-radius: 999px;
+    background: #E5E7EB;
+    margin: 12px 0 24px;
+}
+.inference-risk-fill {
+    height: 100%;
+    border-radius: 999px;
+}
+.inference-final {
+    border-radius: 10px;
+    color: #FFFFFF;
+    padding: 11px 14px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+.inference-detail {
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    background: #FFFFFF;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+.inference-detail summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 10px 12px;
+    color: #0F172A;
+    background: #F8FAFC;
     font-size: 0.8rem;
+    font-weight: 800;
 }
-.timeline-card ul {
-    margin: 5px 0 0 15px;
-    padding: 0;
+.inference-detail summary::-webkit-details-marker { display: none; }
+.inference-detail-body {
+    padding: 11px 12px;
+    color: #475569;
+    font-size: 0.76rem;
+    line-height: 1.5;
 }
-.timeline-card li {
-    margin-bottom: 4px;
+.inference-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+}
+.inference-mini-card {
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    background: #F8FAFC;
+    padding: 8px;
+}
+.inference-code {
+    overflow-x: auto;
+    border-radius: 8px;
+    background: #0F172A;
+    color: #A7F3D0;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 0.68rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+}
+.inference-empty {
+    border: 1px dashed #93C5FD;
+    border-radius: 12px;
+    background: #EFF6FF;
+    color: #1E40AF;
+    padding: 20px;
+    text-align: center;
+    font-size: 0.84rem;
+    line-height: 1.6;
+}
+.pipeline-reference-head {
+    border-bottom: 1px solid #E5E7EB;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+}
+.pipeline-reference-title {
+    color: #0F172A;
+    font-size: 1rem;
+    font-weight: 800;
+}
+.pipeline-reference-desc {
+    color: #64748B;
+    font-size: 0.76rem;
+    line-height: 1.5;
+    margin-top: 3px;
+}
+.pipeline-status {
+    border: 1px solid #A7F3D0;
+    border-radius: 8px;
+    background: #ECFDF5;
+    color: #047857;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    margin-bottom: 8px;
+    padding: 8px 10px;
+}
+.pipeline-status.info {
+    border-color: #BFDBFE;
+    background: #EFF6FF;
+    color: #1D4ED8;
+}
+.pipeline-insight {
+    border: 1px solid #BFDBFE;
+    border-radius: 8px;
+    background: #EFF6FF;
+    color: #1E40AF;
+    font-size: 0.73rem;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    padding: 8px 10px;
+}
+.pipeline-probability {
+    color: #0F172A;
+    font-size: 0.76rem;
+    font-weight: 800;
+    margin: 8px 0 4px;
+}
+.pipeline-probability-value {
+    font-size: 1.55rem;
+    font-weight: 800;
+    margin-top: 4px;
+    text-align: center;
+}
+/* Custom Clickable HTML Log Table */
+.custom-log-table-header {
+    display: grid;
+    grid-template-columns: 1.6fr 3.1fr 1.7fr 0.8fr 0.8fr 2fr;
+    background-color: #F8FAFC;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px 8px 0 0;
+    padding: 10px 15px;
+    font-weight: 700;
+    color: #4B5563;
+    font-size: 0.82rem;
+}
+.custom-log-table-container {
+    border: 1px solid #E5E7EB;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    background-color: #FFFFFF;
+}
+.custom-log-row {
+    display: grid;
+    grid-template-columns: 1.6fr 3.1fr 1.7fr 0.8fr 0.8fr 2fr;
+    padding: 10px 15px;
+    border-bottom: 1px solid #F3F4F6;
+    text-decoration: none !important;
+    color: #4B5563 !important;
+    align-items: center;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+.custom-log-row:hover {
+    background-color: #F1F5F9;
+    color: #0F172A !important;
+}
+.custom-log-row:last-child {
+    border-bottom: none;
+}
+.custom-log-cell-id {
+    font-weight: 700;
+    color: #111827;
+}
+.custom-log-cell-model {
+    color: #64748B;
+}
+.custom-log-cell-result {
+    font-weight: 600;
+    color: #374151;
+}
+.custom-log-cell-risk {
+    color: #374151;
+}
+.custom-log-cell-latency {
+    color: #374151;
+}
+.custom-log-cell-time {
+    color: #374151;
+}
+div[data-element-id="logs_clickable_table"],
+.st-key-logs_clickable_table {
+    border: 1px solid #E5E7EB;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    background-color: #FFFFFF;
+}
+div[data-element-id="logs_clickable_table"] div[data-element-id^="log_row_"],
+.st-key-logs_clickable_table div[class*="st-key-log_row_"] {
+    position: relative !important;
+}
+div[data-element-id="logs_clickable_table"] div[data-element-id^="log_row_"] div.element-container:has(div.stButton),
+.st-key-logs_clickable_table div[class*="st-key-log_row_"] div.element-container:has(div.stButton) {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 10 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+div[data-element-id="logs_clickable_table"] div[data-element-id^="log_row_"] div.stButton,
+div[data-element-id="logs_clickable_table"] div[data-element-id^="log_row_"] div.stButton > button,
+.st-key-logs_clickable_table div[class*="st-key-log_row_"] div.stButton,
+.st-key-logs_clickable_table div[class*="st-key-log_row_"] div.stButton > button {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    border: none !important;
+    background: transparent !important;
+    opacity: 0 !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+}
+div[data-element-id="logs_clickable_table"] div[data-element-id^="log_row_"]:hover .custom-log-row,
+.st-key-logs_clickable_table div[class*="st-key-log_row_"]:hover .custom-log-row {
+    background-color: #F1F5F9;
+    color: #0F172A !important;
+}
+@media (max-width: 1100px) {
+    .inference-flow-map {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .inference-flow-arrow {
+        display: none;
+    }
+}
+div[data-testid="stTextInput"]:has(input[placeholder="SelectLogHidden"]) {
+    display: none !important;
 }
 </style>""", unsafe_allow_html=True)
 
@@ -674,89 +806,213 @@ def render_detail_ui(txn_id):
                 grid_html += "</table>"
                 st.markdown(grid_html, unsafe_allow_html=True)
 
+def reset_detail_selection():
+    st.session_state.logs_detail_table_version = st.session_state.get("logs_detail_table_version", 0) + 1
+
 def close_detail_modal():
+    reset_detail_selection()
     st.rerun()
 
 def render_clickable_logs_table(df_logs):
-    """Hiển thị bảng nhật ký không checkbox; click dòng để mở popup chi tiết."""
+    """Hiển thị bảng nhật ký HTML; click một hàng để mở popup mà không điều hướng trang."""
     columns = ["Mã Giao Dịch", "Mô Hình", "Kết Quả", "Rủi Ro", "Xử Lý", "Thời Điểm"]
-    table_html = textwrap.dedent("""
-        <style>
-            .logs-table-wrap {
-                max-height: 320px;
-                overflow-y: auto;
-                border: 1px solid #E5E7EB;
-                border-radius: 8px;
-                background: #FFFFFF;
-            }
-            .logs-table {
-                width: 100%;
-                border-collapse: collapse;
-                color: #374151;
-                font-size: 0.82rem;
-                text-align: left;
-            }
-            .logs-table th {
-                position: sticky;
-                top: 0;
-                z-index: 1;
-                padding: 11px 12px;
-                background: #F8FAFC;
-                border-bottom: 1px solid #E5E7EB;
-                color: #64748B;
-                font-weight: 600;
-            }
-            .logs-table td {
-                border-bottom: 1px solid #F1F5F9;
-            }
-            .logs-table tr:hover td {
-                background: #EFF6FF;
-            }
-            .logs-table a {
-                display: block;
-                padding: 11px 12px;
-                color: inherit;
-                text-decoration: none;
-                white-space: nowrap;
-            }
-            .logs-table td:first-child a {
-                color: #0F172A;
-                font-weight: 700;
-            }
-        </style>
-        <div class="logs-table-wrap">
-            <table class="logs-table">
-                <thead><tr>
-    """)
-    table_html += "".join(f"<th>{html.escape(column)}</th>" for column in columns)
-    table_html += "</tr></thead><tbody>"
+    header_html = "".join(f"<div>{html.escape(column)}</div>" for column in columns)
+    st.markdown(f'<div class="custom-log-table-header">{header_html}</div>', unsafe_allow_html=True)
 
-    for _, row in df_logs.iterrows():
-        transaction_id = str(row["Mã Giao Dịch"])
-        detail_url = f"?detail_txn={quote_plus(transaction_id)}"
-        table_html += "<tr>"
-        for column in columns:
-            value = html.escape(str(row[column]))
-            table_html += f'<td><a href="{detail_url}" target="_self">{value}</a></td>'
-        table_html += "</tr>"
+    table_version = st.session_state.get("logs_detail_table_version", 0)
+    selected_id = None
+    with st.container(height=320, border=False, key="logs_clickable_table"):
+        for row_position, (_, row) in enumerate(df_logs.iterrows()):
+            transaction_id = str(row["Mã Giao Dịch"])
+            cells = [
+                ("custom-log-cell-id", transaction_id),
+                ("custom-log-cell-model", row["Mô Hình"]),
+                ("custom-log-cell-result", row["Kết Quả"]),
+                ("custom-log-cell-risk", row["Rủi Ro"]),
+                ("custom-log-cell-latency", row["Xử Lý"]),
+                ("custom-log-cell-time", row["Thời Điểm"]),
+            ]
+            cells_html = "".join(
+                f'<div class="{css_class}">{html.escape(str(value))}</div>'
+                for css_class, value in cells
+            )
+            with st.container(key=f"log_row_{row_position}"):
+                st.markdown(f'<div class="custom-log-row">{cells_html}</div>', unsafe_allow_html=True)
+                if st.button(
+                    f"Xem chi tiết {transaction_id}",
+                    key=f"log_detail_{table_version}_{row_position}_{transaction_id}"
+                ):
+                    selected_id = transaction_id
 
-    table_html += "</tbody></table></div>"
-    st.html(table_html)
+    return selected_id
 
 # Hỗ trợ popup dialog theo phiên bản Streamlit
 if hasattr(st, "dialog"):
-    @st.dialog("Chi Tiết Nhật Ký Giao Dịch", width="large")
+    @st.dialog("Chi Tiết Nhật Ký Giao Dịch", width="large", on_dismiss=reset_detail_selection)
     def show_detail_modal(txn_id):
         render_detail_ui(txn_id)
         st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
-        if st.button("Đóng popup chi tiết", type="primary", use_container_width=True):
+        if st.button("Đóng", type="primary", use_container_width=True):
             close_detail_modal()
 else:
     def show_detail_modal(txn_id):
         st.markdown("<hr style='border: 1px solid #1E3A8A;'>", unsafe_allow_html=True)
         render_detail_ui(txn_id)
-        if st.button("Đóng chi tiết", type="secondary", use_container_width=True):
+        if st.button("Đóng", type="secondary", use_container_width=True):
             close_detail_modal()
+
+def render_realtime_pipeline(primary_algo, scaled_amt, scaled_time):
+    prob_val = float(st.session_state.main_fraud_prob)
+    threshold_val = float(st.session_state.decision_threshold_slider)
+    prob_percent = f"{prob_val * 100:.2f}%"
+    threshold_percent = f"{threshold_val * 100:.2f}%"
+    is_fraud = st.session_state.main_prediction_label == 1
+    decision_code = "FRAUD" if is_fraud else "NORMAL"
+    decision_text = "CẢNH BÁO GIAN LẬN - CẦN KIỂM TRA" if is_fraud else "GIAO DỊCH HỢP LỆ - CÓ THỂ DUYỆT"
+    decision_icon = "fa-triangle-exclamation" if is_fraud else "fa-circle-check"
+    decision_color = "#EF4444" if is_fraud else "#10B981"
+    operator = "&ge;" if is_fraud else "&lt;"
+
+    if prob_val >= threshold_val:
+        risk_color = "#EF4444"
+        risk_zone = "Vượt ngưỡng cảnh báo"
+    elif prob_val >= max(threshold_val * 0.7, 0.30):
+        risk_color = "#F59E0B"
+        risk_zone = "Vùng xám cần lưu ý"
+    else:
+        risk_color = "#10B981"
+        risk_zone = "Dưới ngưỡng an toàn"
+
+    _, log_target = st.session_state.get("db_write_status", (True, "OFFLINE_FALLBACK"))
+    log_target_label = "SQL Server" if log_target == "SQL_SERVER" else "Offline fallback"
+    logged_txn_id = st.session_state.get("last_logged_txn_id", "TXN-NEW")
+    threshold_only_recheck = st.session_state.get("threshold_only_recheck", False)
+    if threshold_only_recheck:
+        log_status = """<div class="pipeline-status info">
+    <i class="fa-solid fa-circle-info"></i>
+    <strong>Chỉ cập nhật giao diện:</strong> threshold thay đổi nên hệ thống tự tính lại quyết định,
+    không ghi thêm nhật ký để tránh tạo bản ghi trùng lặp.
+</div>"""
+        log_code = f"Bản ghi gần nhất vẫn giữ nguyên: {logged_txn_id}"
+    else:
+        log_status = f"""<div class="pipeline-status">
+    <i class="fa-solid fa-circle-check"></i>
+    <strong>Đã lưu thành công:</strong> kết quả được ghi vào {log_target_label}.
+</div>"""
+        log_code = f"""INSERT INTO TransactionLogs
+  (TransactionID, ModelName, Prediction, Probability)
+VALUES
+  ('{logged_txn_id}', '{primary_algo} - SMOTE', '{decision_code}', {prob_val:.6f});"""
+
+    pipeline_html = f"""
+<div class="pipeline-reference-head">
+    <div class="pipeline-reference-title">
+        <i class="fa-solid fa-code-branch"></i> Luồng Xử Lý & Suy Luận Thời Gian Thực
+    </div>
+    <div class="pipeline-reference-desc">
+        Chi tiết các bước xử lý dữ liệu từ khi nhận giao dịch đến khi trả quyết định và lưu nhật ký truy vết.
+    </div>
+</div>
+
+<details class="inference-detail" open>
+    <summary><i class="fa-solid fa-chevron-down"></i> Bước 1 - Tiếp nhận tín hiệu (Input Received)</summary>
+    <div class="inference-detail-body">
+        <div class="pipeline-status">
+            <i class="fa-solid fa-circle-check"></i>
+            <strong>Trạng thái:</strong> nhận thành công gói dữ liệu gồm 30 đặc trưng.
+        </div>
+        <div class="pipeline-insight">
+            <i class="fa-solid fa-lightbulb"></i>
+            <strong>Giải thích:</strong> 28 biến V1 - V28 là đặc trưng PCA đã ẩn danh để bảo vệ thông tin khách hàng.
+            Hai biến còn lại là Amount và Time.
+        </div>
+        <div class="inference-code">{{
+  "Time": {st.session_state.time_val:.1f},
+  "Amount": {st.session_state.amount_val:.2f},
+  "V1": {st.session_state.v_array[0]:.6f},
+  "V4": {st.session_state.v_array[3]:.6f},
+  "V10": {st.session_state.v_array[9]:.6f},
+  "V12": {st.session_state.v_array[11]:.6f},
+  "V14": {st.session_state.v_array[13]:.6f},
+  "...": "23 biến V còn lại"
+}}</div>
+    </div>
+</details>
+
+<details class="inference-detail" open>
+    <summary><i class="fa-solid fa-chevron-down"></i> Bước 2 - Tiền xử lý & Chuẩn hóa (Preprocessing)</summary>
+    <div class="inference-detail-body">
+        <div class="pipeline-insight">
+            <i class="fa-solid fa-lightbulb"></i>
+            <strong>Giải thích:</strong> hệ thống dùng hai scaler đã học từ dữ liệu lịch sử để đưa Amount và Time
+            về cùng thang đo. Các biến PCA V1 - V28 được giữ nguyên.
+        </div>
+        <div class="inference-mini-grid">
+            <div class="inference-mini-card">
+                <strong>Amount ($)</strong><br>
+                Sau chuẩn hóa: <strong>{scaled_amt:.6f}</strong><br>
+                Gốc: ${st.session_state.amount_val:.2f}
+            </div>
+            <div class="inference-mini-card">
+                <strong>Time (giây)</strong><br>
+                Sau chuẩn hóa: <strong>{scaled_time:.6f}</strong><br>
+                Gốc: {st.session_state.time_val:.1f}
+            </div>
+        </div>
+    </div>
+</details>
+
+<details class="inference-detail" open>
+    <summary><i class="fa-solid fa-chevron-down"></i> Bước 3 & 4 - Mô hình suy luận (Model Inference)</summary>
+    <div class="inference-detail-body">
+        <div class="pipeline-insight">
+            <i class="fa-solid fa-lightbulb"></i>
+            <strong>Giải thích:</strong> vector 30 chiều được đưa vào <strong>{primary_algo} - SMOTE</strong>.
+            SMOTE được sử dụng ở pha huấn luyện để cải thiện khả năng nhận diện lớp gian lận hiếm.
+        </div>
+        <div class="pipeline-probability">Xác suất rủi ro gian lận:</div>
+        <div class="inference-risk-track">
+            <div class="inference-risk-fill" style="width: {prob_val * 100:.2f}%; background: {risk_color};"></div>
+        </div>
+        <div class="pipeline-probability-value" style="color: {risk_color};">{prob_percent}</div>
+        <div style="text-align: center; color: #64748B; font-size: 0.7rem;">{risk_zone}</div>
+    </div>
+</details>
+
+<details class="inference-detail" open>
+    <summary><i class="fa-solid fa-chevron-down"></i> Bước 5 - Ra quyết định (Threshold Decision)</summary>
+    <div class="inference-detail-body">
+        <div class="pipeline-insight">
+            <i class="fa-solid fa-lightbulb"></i>
+            <strong>Giải thích:</strong> threshold có thể tinh chỉnh ở khung bên trái.
+            Sau lần kiểm tra đầu tiên, kéo threshold sẽ tự động cập nhật quyết định mà không cần bấm nút.
+        </div>
+        <div class="inference-decision-grid">
+            <div class="inference-metric-box">
+                <div class="inference-metric-label">Xác suất tính toán</div>
+                <div class="inference-metric-value" style="color: {risk_color};">{prob_percent}</div>
+            </div>
+            <div class="inference-operator">{operator}</div>
+            <div class="inference-metric-box threshold">
+                <div class="inference-metric-label">Ngưỡng hệ thống</div>
+                <div class="inference-metric-value" style="color: #7C3AED;">{threshold_percent}</div>
+            </div>
+        </div>
+        <div class="inference-final" style="background: {decision_color};">
+            <i class="fa-solid {decision_icon}"></i> {decision_text}
+        </div>
+    </div>
+</details>
+
+<details class="inference-detail" open>
+    <summary><i class="fa-solid fa-chevron-down"></i> Bước 6 - Ghi log (Database Logging)</summary>
+    <div class="inference-detail-body">
+        {log_status}
+        <div class="inference-code">{log_code}</div>
+    </div>
+</details>
+"""
+    st.html(pipeline_html)
 
 # =====================================================================
 # 4. HÀM TẢI MÔ HÌNH VÀ BỘ CHUẨN HÓA (FUNCTIONAL API 1D-CNN)
@@ -827,8 +1083,6 @@ except Exception as e:
 
 @st.cache_data(show_spinner="Đang phân tích đóng góp các biến số (SHAP)...")
 def get_shap_explanation_cached(primary_algo, model_type, features_tuple):
-    import numpy as np
-    import pandas as pd
     import shap
     
     # 1. Khởi tạo dataframe
@@ -898,8 +1152,7 @@ def get_shap_explanation_cached(primary_algo, model_type, features_tuple):
 # =====================================================================
 # 5. GIỮ VÀ ĐỒNG BỘ SESSION STATE CHO SCENARIO VÀ SLIDERS
 # =====================================================================
-if "scenario_changed" not in st.session_state:
-    st.session_state.scenario_changed = False
+if "scenario_select" not in st.session_state:
     st.session_state.scenario_select = "Tự cấu hình thông số (Custom)"
     
     # Khởi tạo giá trị mặc định cho sliders dạng Custom
@@ -919,6 +1172,7 @@ if "scenario_changed" not in st.session_state:
     st.session_state.main_fraud_prob = 0.0
     st.session_state.main_prediction_label = 0
     st.session_state.processed_df_main = None
+    st.session_state.pending_input_changes = False
 
 # Khởi tạo bổ sung đề phòng hot-reload từ phiên bản cũ thiếu trường V4
 if "v4_val" not in st.session_state:
@@ -928,31 +1182,46 @@ if "v4_val" not in st.session_state:
 def on_parameter_change():
     st.session_state.scenario_select = "Tự cấu hình thông số (Custom)"
 
+NORMAL_SCENARIO = "TXN-001 (Mẫu Giao dịch Hợp lệ - Normal)"
+FRAUD_SCENARIO = "TXN-007 (Mẫu Giao dịch Nghi ngờ Gian lận - Fraud)"
+GRAY_ZONE_SCENARIO = "Giao dịch nghi ngờ (Vùng xám)"
+REAL_DATA_SCENARIOS = {NORMAL_SCENARIO, FRAUD_SCENARIO, GRAY_ZONE_SCENARIO}
+
 # Hàm đồng bộ hóa khi chuyển đổi giao dịch mẫu
 def on_scenario_change():
     scen = st.session_state.get("scenario_select")
     if not scen:
         return
-    if scen == "TXN-001 (Mẫu Giao dịch Hợp lệ - Normal)":
-        st.session_state.time_val = 406.0
-        st.session_state.amount_val = 4.90
-        st.session_state.v14_val = -0.50
-        st.session_state.v4_val = 1.15
-        st.session_state.v12_val = -3.30
-        st.session_state.v10_val = -0.10
-        st.session_state.v_array = [-2.31, 1.66, -1.17, 1.15, -0.74, -0.10, -1.78, 0.46, -0.76, -0.10, -0.03, 0.31, -0.30, -0.28, 1.22, 0.42, 1.25, -0.32, 1.05, 0.13, 0.18, 0.36, 0.16, -0.47, -0.46, 0.34, 0.18, 0.08]
-        st.session_state.v_array[13] = -0.50
-        st.session_state.v_array[3] = 1.15
-        st.session_state.v_array[11] = -3.30
-        st.session_state.v_array[9] = -0.10
-    elif scen == "TXN-007 (Mẫu Giao dịch Nghi ngờ Gian lận - Fraud)":
-        st.session_state.time_val = 50000.0
-        st.session_state.amount_val = 950.00
-        st.session_state.v14_val = -9.50
-        st.session_state.v4_val = 6.50
-        st.session_state.v12_val = -9.20
-        st.session_state.v10_val = -6.50
-        st.session_state.v_array = [-3.04, 3.48, -3.74, 6.50, -1.17, -1.41, -2.44, 0.49, -2.75, -6.50, 4.59, -9.20, 1.43, -9.50, -0.10, -5.50, -8.50, -1.25, -0.33, 0.35, 0.66, 0.44, -0.04, -0.25, -0.27, -0.02, 0.35, -0.15]
+    if scen == NORMAL_SCENARIO:
+        # Dòng thật raw index 150513 trong creditcard.csv, thuộc X_test, Class = 0.
+        # RandomForest_SMOTE.predict_proba trả xác suất rủi ro đúng 6.00%.
+        st.session_state.time_val = 93581.0
+        st.session_state.amount_val = 444.98
+        st.session_state.v14_val = 2.525498
+        st.session_state.v4_val = 1.376933
+        st.session_state.v12_val = -3.338335
+        st.session_state.v10_val = -0.054195
+        st.session_state.v_array = [-1.922986, -0.504946, -1.201207, 1.376933, -0.029364, 0.169823, 3.022871, -0.819448, 0.50209, -0.054195, 1.33928, -3.338335, -0.236799, 2.525498, -0.537372, -0.258999, 0.217676, 0.868803, 0.96718, -1.519464, -0.346873, 0.768965, 0.919211, -0.444387, 0.114991, -0.366782, 0.538271, -0.229909]
+    elif scen == FRAUD_SCENARIO:
+        # Dòng thật raw index 18809 trong creditcard.csv, thuộc X_test, Class = 1.
+        # RandomForest_SMOTE.predict_proba trả xác suất rủi ro đúng 74.00%.
+        st.session_state.time_val = 29785.0
+        st.session_state.amount_val = 30.30
+        st.session_state.v14_val = -2.971317
+        st.session_state.v4_val = 1.72168
+        st.session_state.v12_val = -2.549177
+        st.session_state.v10_val = -2.895252
+        st.session_state.v_array = [0.923764, 0.344048, -2.880004, 1.72168, -3.019565, -0.639736, -3.801325, 1.299096, 0.864065, -2.895252, 3.028162, -2.549177, -1.560432, -2.971317, 1.078895, -4.702012, -4.908099, -1.508873, 3.001685, 0.170872, 0.899931, 1.481271, 0.725266, 0.17696, -1.815638, -0.536517, 0.489035, -0.049729]
+    elif scen == GRAY_ZONE_SCENARIO:
+        # Dòng thật raw index 10204 trong creditcard.csv, thuộc X_test.
+        # RandomForest_SMOTE.predict_proba trả xác suất rủi ro đúng 40.00%.
+        st.session_state.time_val = 15817.0
+        st.session_state.amount_val = 11.39
+        st.session_state.v14_val = -3.26647554459315
+        st.session_state.v4_val = 2.507298518227
+        st.session_state.v12_val = -6.54261034532574
+        st.session_state.v10_val = 1.07741752106048
+        st.session_state.v_array = [-4.64189285087538, 2.90208643306647, -1.57293870931742, 2.507298518227, -0.871782564349351, -1.0409025722626, -1.59390073966645, -3.25490508581579, 1.90896268593707, 1.07741752106048, 3.33850216040272, -6.54261034532574, 1.09953638182128, -3.26647554459315, 1.01472790444294, -4.84238307827835, -5.269876299726, -2.34466857415508, 1.95922405409272, -0.465679220344122, 1.96359666634146, -0.217413915973245, -0.54933995583883, 0.645545202036521, -0.354557818794591, -0.611763845006479, -3.90808047547799, -0.671248265147117]
     else:
         st.session_state.time_val = 0.0
         st.session_state.amount_val = 100.0
@@ -970,7 +1239,10 @@ def on_scenario_change():
     st.session_state.v12_slider = st.session_state.v12_val
     st.session_state.v10_slider = st.session_state.v10_val
     
-    st.session_state.v_string_input_area = ", ".join([f"{v:.4f}" for v in st.session_state.v_array])
+    if scen in REAL_DATA_SCENARIOS:
+        st.session_state.v_string_input_area = ", ".join([repr(float(v)) for v in st.session_state.v_array])
+    else:
+        st.session_state.v_string_input_area = ", ".join([f"{v:.4f}" for v in st.session_state.v_array])
     for i in range(28):
         st.session_state[f"v_field_{i}"] = float(st.session_state.v_array[i])
 
@@ -999,7 +1271,7 @@ with col_left:
     with col_c2:
         selected_txn = st.selectbox(
             "Giao dịch (Auto-fill):",
-            ["TXN-007 (Mẫu Giao dịch Nghi ngờ Gian lận - Fraud)", "TXN-001 (Mẫu Giao dịch Hợp lệ - Normal)", "Tự cấu hình thông số (Custom)"],
+            [FRAUD_SCENARIO, GRAY_ZONE_SCENARIO, NORMAL_SCENARIO, "Tự cấu hình thông số (Custom)"],
             key="scenario_select",
             on_change=on_scenario_change
         )
@@ -1086,6 +1358,15 @@ with col_left:
             final_v_inputs = v_inputs_tmp
             st.session_state.v_array = final_v_inputs
 
+    # Các slider what-if là nguồn dữ liệu cuối cùng cho bốn biến mạnh.
+    # Đồng bộ sau bước parse chuỗi để giá trị textarea cũ không ghi đè thay đổi vừa kéo.
+    final_v_inputs = list(final_v_inputs)
+    final_v_inputs[13] = v14_val
+    final_v_inputs[3] = v4_val
+    final_v_inputs[11] = v12_val
+    final_v_inputs[9] = v10_val
+    st.session_state.v_array = final_v_inputs
+
     predict_clicked = st.button("KIỂM TRA GIAO DỊCH VÀ GHI NHẬT KÝ VẾT", type="primary", use_container_width=True)
 
 # Chuẩn hóa dữ liệu thô đầu vào để chạy mô hình
@@ -1093,20 +1374,23 @@ scaled_amt = all_assets["scaler_amount"].transform([[st.session_state.amount_val
 scaled_time = all_assets["scaler_time"].transform([[st.session_state.time_val]])[0][0]
 features_array = np.array([scaled_amt, scaled_time] + final_v_inputs).reshape(1, -1)
 
-# Tự động theo dõi sự thay đổi của tham số để ẩn kết quả phân tích cũ
-params_changed = False
+# Tự động theo dõi sự thay đổi của tham số.
+# Threshold chỉ thay đổi quyết định, nên sau lần kiểm tra đầu tiên có thể tự tính lại
+# mà không ghi thêm nhật ký. Các đầu vào khác vẫn yêu cầu người dùng bấm kiểm tra lại.
+input_params_changed = False
+threshold_changed = False
 if "prev_time_val" in st.session_state and st.session_state.prev_time_val != st.session_state.time_val:
-    params_changed = True
+    input_params_changed = True
 if "prev_amount_val" in st.session_state and st.session_state.prev_amount_val != st.session_state.amount_val:
-    params_changed = True
+    input_params_changed = True
 if "prev_v_array" in st.session_state and st.session_state.prev_v_array != st.session_state.v_array:
-    params_changed = True
+    input_params_changed = True
 if "prev_primary_algo" in st.session_state and st.session_state.prev_primary_algo != primary_algo:
-    params_changed = True
+    input_params_changed = True
 if "prev_decision_threshold" in st.session_state and st.session_state.prev_decision_threshold != decision_threshold:
-    params_changed = True
+    threshold_changed = True
 if "prev_input_method" in st.session_state and st.session_state.prev_input_method != input_method:
-    params_changed = True
+    input_params_changed = True
 
 st.session_state.prev_time_val = st.session_state.time_val
 st.session_state.prev_amount_val = st.session_state.amount_val
@@ -1115,12 +1399,22 @@ st.session_state.prev_primary_algo = primary_algo
 st.session_state.prev_decision_threshold = decision_threshold
 st.session_state.prev_input_method = input_method
 
-if params_changed:
+if input_params_changed:
+    st.session_state.pending_input_changes = True
     st.session_state.run_prediction = False
+    st.session_state.threshold_only_recheck = False
 
-if predict_clicked:
+auto_recheck_threshold = (
+    threshold_changed
+    and st.session_state.run_prediction
+    and not st.session_state.get("pending_input_changes", False)
+)
+
+if predict_clicked or auto_recheck_threshold:
     st.session_state.run_prediction = True
-    st.session_state.refresh_logs = True
+    if predict_clicked:
+        st.session_state.pending_input_changes = False
+        st.session_state.refresh_logs = True
     start_time = time.time()
     
     # Định nghĩa cấu hình đối sánh 8 mô hình
@@ -1192,45 +1486,54 @@ if predict_clicked:
     st.session_state.main_fraud_prob = main_fraud_prob
     st.session_state.main_prediction_label = main_prediction_label
     st.session_state.processed_df_main = processed_df_main
+    st.session_state.threshold_only_recheck = auto_recheck_threshold
 
-    # GHI VÀO SQL SERVER / LOCAL FALLBACK
-    try:
-        existing_logs, _, _ = fetch_all_logs()
-        if not isinstance(existing_logs, list):
+    if predict_clicked:
+        # GHI VÀO SQL SERVER / LOCAL FALLBACK
+        try:
+            existing_logs, _, _ = fetch_all_logs()
+            if not isinstance(existing_logs, list):
+                existing_logs = []
+        except Exception:
             existing_logs = []
-    except Exception:
-        existing_logs = []
 
-    if "TXN-007" in selected_txn:
-        matching_ids = [log for log in existing_logs if log.get("TransactionID") and "TXN-007" in str(log.get("TransactionID"))]
-        next_num = len(matching_ids) + 1
-        txn_id_log = f"TXN-007-{next_num:03d}"
-    elif "TXN-001" in selected_txn:
-        matching_ids = [log for log in existing_logs if log.get("TransactionID") and "TXN-001" in str(log.get("TransactionID"))]
-        next_num = len(matching_ids) + 1
-        txn_id_log = f"TXN-001-{next_num:03d}"
-    else:
-        custom_ids = [log for log in existing_logs if log.get("TransactionID") and "TXN-CUSTOM" in str(log.get("TransactionID"))]
-        next_num = len(custom_ids) + 1
-        txn_id_log = f"TXN-CUSTOM-{next_num:03d}"
-    
-    pred_str_db = "FRAUD" if st.session_state.main_prediction_label == 1 else "NORMAL"
-    
-    status_db_write, target_db = insert_log_to_sql(
-        transaction_id=txn_id_log,
-        model_name=f"{primary_algo} - SMOTE",
-        prediction=pred_str_db,
-        probability=float(st.session_state.main_fraud_prob),
-        execution_time_ms=main_duration,
-        input_time=st.session_state.time_val,
-        input_amount=st.session_state.amount_val,
-        v_values=final_v_inputs
-    )
-    st.session_state.db_write_status = (status_db_write, target_db)
+        if "TXN-007" in selected_txn:
+            matching_ids = [log for log in existing_logs if log.get("TransactionID") and "TXN-007" in str(log.get("TransactionID"))]
+            next_num = len(matching_ids) + 1
+            txn_id_log = f"TXN-007-{next_num:03d}"
+        elif "TXN-001" in selected_txn:
+            matching_ids = [log for log in existing_logs if log.get("TransactionID") and "TXN-001" in str(log.get("TransactionID"))]
+            next_num = len(matching_ids) + 1
+            txn_id_log = f"TXN-001-{next_num:03d}"
+        elif selected_txn == GRAY_ZONE_SCENARIO:
+            matching_ids = [log for log in existing_logs if log.get("TransactionID") and "TXN-GRAY" in str(log.get("TransactionID"))]
+            next_num = len(matching_ids) + 1
+            txn_id_log = f"TXN-GRAY-{next_num:03d}"
+        else:
+            custom_ids = [log for log in existing_logs if log.get("TransactionID") and "TXN-CUSTOM" in str(log.get("TransactionID"))]
+            next_num = len(custom_ids) + 1
+            txn_id_log = f"TXN-CUSTOM-{next_num:03d}"
+
+        pred_str_db = "FRAUD" if st.session_state.main_prediction_label == 1 else "NORMAL"
+
+        status_db_write, target_db = insert_log_to_sql(
+            transaction_id=txn_id_log,
+            model_name=f"{primary_algo} - SMOTE",
+            prediction=pred_str_db,
+            probability=float(st.session_state.main_fraud_prob),
+            execution_time_ms=main_duration,
+            input_time=st.session_state.time_val,
+            input_amount=st.session_state.amount_val,
+            v_values=final_v_inputs
+        )
+        st.session_state.db_write_status = (status_db_write, target_db)
+        st.session_state.last_logged_txn_id = txn_id_log
     
 # =====================================================================
-# 9. ĐIỀU HƯỚNG TAB NGANG TRÊN CÙNG & HIỂN THỊ CHI TIẾT
+# 6. ĐIỀU HƯỚNG TAB NGANG TRÊN CÙNG & HIỂN THỊ CHI TIẾT
 # =====================================================================
+selected_detail_id = None
+
 with col_right:
     tab_shap, tab_process, tab_logs = st.tabs([
         "KẾT QUẢ & GIẢI THÍCH (SHAP)",
@@ -1239,8 +1542,6 @@ with col_right:
     ])
     
     with tab_shap:
-        
-        
         if not st.session_state.run_prediction:
             st.markdown("""
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 580px; color: #9CA3AF; width: 100%;">
@@ -1357,7 +1658,18 @@ with col_right:
             elif shap_values is not None and top_5_features is not None:
                 fig, ax = plt.subplots(figsize=(7, 2.6))
                 colors = ['#EF4444' if val > 0 else '#10B981' for val in top_5_features['SHAP']]
-                ax.barh(top_5_features['Feature'], top_5_features['SHAP'], color=colors, height=0.55, edgecolor='none')
+
+                # Tạo nhãn hiển thị chứa cả tên biến và giá trị thực tế/sau chuẩn hóa của biến
+                y_labels = []
+                for _, r in top_5_features.iterrows():
+                    feat = r['Feature']
+                    val = r['Value']
+                    if feat in ["scaled_amount", "scaled_time"]:
+                        y_labels.append(f"{feat} = {val:.3f}")
+                    else:
+                        y_labels.append(f"{feat} = {val:.4f}")
+
+                ax.barh(y_labels, top_5_features['SHAP'], color=colors, height=0.55, edgecolor='none')
                 ax.axvline(0, color='#9CA3AF', linewidth=0.8, linestyle='--')
                 ax.set_xlabel('Mức độ đóng góp SHAP', fontsize=8.5, fontweight='bold', color='#4B5563')
                 ax.spines['top'].set_visible(False)
@@ -1458,78 +1770,17 @@ with col_right:
         ])
         
         with sys_tab1:
-            st.markdown("<h4 style='color: #0A2540; font-size: 1rem; font-weight: 700; margin-bottom: 10px;'><i class='fa-solid fa-network-wired'></i> LUỒNG THỜI GIAN THỰC (REAL-TIME INFERENCE FLOW)</h4>", unsafe_allow_html=True)
-            
-            if st.session_state.run_prediction:
-                prob_val = st.session_state.main_fraud_prob
-                prob_percent = f"{prob_val * 100:.2f}%"
-                decision_badge = '<span class="timeline-badge-value" style="background-color: #FEF2F2; color: #EF4444; border: 1px solid #FCA5A5; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px;"><i class="fa-solid fa-triangle-exclamation"></i> GIAN LẬN (FRAUD)</span>' if st.session_state.main_prediction_label == 1 else '<span class="timeline-badge-value" style="background-color: #ECFDF5; color: #10B981; border: 1px solid #A7F3D0; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px;"><i class="fa-solid fa-circle-check"></i> HỢP LỆ (NORMAL)</span>'
-                decision_card_border = "danger-border" if st.session_state.main_prediction_label == 1 else "success-border"
+            if not st.session_state.run_prediction:
+                st.markdown("""
+                    <div class="inference-empty">
+                        <div style="font-size: 2rem; margin-bottom: 6px;"><i class="fa-solid fa-diagram-project"></i></div>
+                        <strong>Chưa có luồng suy luận để hiển thị</strong><br>
+                        Chọn giao dịch ở khung bên trái và bấm <strong>KIỂM TRA GIAO DỊCH VÀ GHI NHẬT KÝ VẾT</strong>.<br>
+                        Hệ thống sẽ mô phỏng trực quan từng bước bằng chính dữ liệu vừa phân tích.
+                    </div>
+                """, unsafe_allow_html=True)
             else:
-                prob_percent = "99.99% (Mẫu)"
-                decision_badge = '<span class="timeline-badge-value" style="background-color: #FEF2F2; color: #EF4444; border: 1px solid #FCA5A5; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px;"><i class="fa-solid fa-triangle-exclamation"></i> GIAN LẬN (FRAUD)</span>'
-                decision_card_border = "danger-border"
-
-
-            # Luồng nghiệp vụ ngắn gọn cho người dùng cuối
-            st.markdown(f"""
-                <!-- Bước 1 -->
-                <div class="timeline-card">
-                    <div class="timeline-card-title">
-                        <span style="background-color: #1E3A8A; color: white; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">1</span>
-                        Nhận giao dịch
-                    </div>
-                    <div class="timeline-card-content">
-                        Hệ thống tiếp nhận thông tin giao dịch cần kiểm tra.
-                        <ul style="margin-top: 6px;">
-                            <li>Số tiền: <span class="timeline-badge-value">${st.session_state.amount_val:.2f}</span></li>
-                            <li>Thời gian: <span class="timeline-badge-value">{st.session_state.time_val:.1f} giây</span></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Bước 2 -->
-                <div class="timeline-card">
-                    <div class="timeline-card-title">
-                        <span style="background-color: #1E3A8A; color: white; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">2</span>
-                        Kiểm tra dữ liệu
-                    </div>
-                    <div class="timeline-card-content">
-                        Hệ thống tự động kiểm tra dữ liệu đầu vào để bảo đảm thông tin đầy đủ và hợp lệ.
-                    </div>
-                </div>
-
-                <!-- Bước 3 -->
-                <div class="timeline-card">
-                    <div class="timeline-card-title">
-                        <span style="background-color: #1E3A8A; color: white; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">3</span>
-                        AI phân tích và đánh giá rủi ro
-                    </div>
-                    <div class="timeline-card-content">
-                        Mô hình phân tích giao dịch và tính mức độ rủi ro.
-                        <ul style="margin-top: 6px;">
-                            <li>Mô hình sử dụng: <span class="timeline-badge-value">{primary_algo}</span></li>
-                            <li>Xác suất gian lận: <span class="timeline-badge-value" style="color: {'#EF4444' if st.session_state.main_prediction_label == 1 else '#10B981'}; font-weight: bold;">{prob_percent}</span></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Bước 4 -->
-                <div class="timeline-card {decision_card_border}">
-                    <div class="timeline-card-title">
-                        <span style="background-color: #1E3A8A; color: white; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">4</span>
-                        Trả kết quả và lưu lịch sử
-                    </div>
-                    <div class="timeline-card-content">
-                        Hệ thống trả kết quả để hỗ trợ xử lý và lưu lịch sử phục vụ tra cứu.
-                        <div style="margin-top: 10px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px;">
-                            <strong style="font-size: 0.88rem;">Kết quả:</strong>
-                            {decision_badge}
-                        </div>
-                        <div style="font-size: 0.78rem; color: #6B7280;">Lịch sử giao dịch đã được ghi nhận để tra cứu khi cần.</div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
+                render_realtime_pipeline(primary_algo, scaled_amt, scaled_time)
 
         with sys_tab2:
             st.markdown("<h4 style='color: #0A2540; font-size: 1rem; font-weight: 700; margin-top: 10px; margin-bottom: 5px;'><i class='fa-solid fa-table-list'></i> Đối Sánh Phân Loại Thời Gian Thực (8 Cấu Hình)</h4>", unsafe_allow_html=True)
@@ -1811,11 +2062,10 @@ with col_right:
                 </p>
             """, unsafe_allow_html=True)
              
-            render_clickable_logs_table(df_logs)
+            selected_detail_id = render_clickable_logs_table(df_logs)
 
-            selected_detail_id = st.query_params.get("detail_txn")
-            if selected_detail_id:
-                del st.query_params["detail_txn"]
-                show_detail_modal(selected_detail_id)
         else:
             st.write("Không tìm thấy nhật ký giao dịch.")
+
+if selected_detail_id:
+    show_detail_modal(selected_detail_id)
