@@ -375,29 +375,28 @@ div[data-testid="stDialog"] div[role="dialog"] {
 .custom-log-cell-time {
     color: #374151;
 }
-div[data-element-id="logs_clickable_table"],
 .st-key-logs_clickable_table {
     border: 1px solid #E5E7EB;
     border-top: none;
     border-radius: 0 0 8px 8px;
     background-color: #FFFFFF;
 }
-div[data-element-id="logs_clickable_table"] div[data-element-id^="log_row_"],
 .st-key-logs_clickable_table div[class*="st-key-log_row_"] {
     position: relative !important;
 }
-div[data-element-id="logs_clickable_table"] div[data-element-id^="log_row_"] div.element-container:has(div.stButton),
+.st-key-logs_clickable_table div[class*="st-key-log_row_"] div[data-testid="stElementContainer"]:has(button),
 .st-key-logs_clickable_table div[class*="st-key-log_row_"] div.element-container:has(div.stButton) {
     position: absolute !important;
     inset: 0 !important;
-    z-index: 10 !important;
+    z-index: 99999 !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
 }
-div[data-element-id="logs_clickable_table"] div[data-element-id^="log_row_"] div.stButton,
-div[data-element-id="logs_clickable_table"] div[data-element-id^="log_row_"] div.stButton > button,
-.st-key-logs_clickable_table div[class*="st-key-log_row_"] div.stButton,
-.st-key-logs_clickable_table div[class*="st-key-log_row_"] div.stButton > button {
+.st-key-logs_clickable_table div[class*="st-key-log_row_"] button {
+    position: absolute !important;
+    inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
     min-height: 100% !important;
@@ -405,9 +404,10 @@ div[data-element-id="logs_clickable_table"] div[data-element-id^="log_row_"] div
     background: transparent !important;
     opacity: 0 !important;
     padding: 0 !important;
+    margin: 0 !important;
     cursor: pointer !important;
+    z-index: 99999 !important;
 }
-div[data-element-id="logs_clickable_table"] div[data-element-id^="log_row_"]:hover .custom-log-row,
 .st-key-logs_clickable_table div[class*="st-key-log_row_"]:hover .custom-log-row {
     background-color: #F1F5F9;
     color: #0F172A !important;
@@ -443,9 +443,16 @@ def get_model_path(filename):
 # 3. KẾT NỐI SQL SERVER & XỬ LÝ NHẬT KÝ LƯU VẾT
 # =====================================================================
 def get_sql_connection():
+    # --- TỐI ƯU HÓA HIỆU NĂNG: Tránh kết nối lại liên tục nếu SQL Server đang offline ---
+    now = time.time()
+    if "sql_last_fail_time" in st.session_state:
+        if now - st.session_state.sql_last_fail_time < 30.0:  # Cooldown 30 giây
+            return None, "SQL Server đang tạm ngắt kết nối (chế độ offline). Đang bỏ qua kết nối để tối ưu tốc độ."
+
     drivers = [d for d in pyodbc.drivers() if 'SQL Server' in d or 'ODBC' in d]
     if not drivers:
         logger.warning("Không tìm thấy ODBC Driver SQL Server nào trên máy!")
+        st.session_state.sql_last_fail_time = now
         return None, "Không tìm thấy ODBC driver SQL Server nào trên hệ thống."
     
     preferred_drivers = [
@@ -472,10 +479,14 @@ def get_sql_connection():
     conn_str = f"DRIVER={{{selected_driver}}};SERVER={server};DATABASE={database};Trusted_Connection=yes{trust_cert};"
     
     try:
-        conn = pyodbc.connect(conn_str, timeout=3)
+        # Giảm timeout xuống 1 giây để phản hồi ngay lập tức nếu server không khả dụng
+        conn = pyodbc.connect(conn_str, timeout=1)
+        if "sql_last_fail_time" in st.session_state:
+            del st.session_state.sql_last_fail_time
         return conn, None
     except Exception as e:
         logger.error(f"Lỗi kết nối SQL Server: {str(e)}")
+        st.session_state.sql_last_fail_time = now
         return None, f"Không thể kết nối đến SQL Server DANH-PC. Đang chuyển sang offline fallback. (Chi tiết: {str(e)})"
 
 def insert_log_to_sql(transaction_id, model_name, prediction, probability, execution_time_ms, input_time, input_amount, v_values):
