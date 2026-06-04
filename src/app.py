@@ -329,40 +329,53 @@ div[data-testid="stDialog"] div[role="dialog"] {
     padding: 8px 10px;
 }
 .pipeline-prep-flow {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr auto 1fr;
+    display: flex;
+    flex-wrap: wrap;
     align-items: stretch;
-    gap: 8px;
-    margin: 4px 0 10px;
+    gap: 12px;
+    margin: 10px 0 16px;
 }
 .pipeline-prep-card {
-    border: 1px solid #BFDBFE;
-    border-radius: 9px;
-    background: #F8FAFC;
-    padding: 9px 10px;
+    flex: 1 1 220px;
+    min-width: 220px;
+    border: 1px solid #E2E8F0;
+    border-radius: 18px;
+    background: #FFFFFF;
+    padding: 16px 18px;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
 }
 .pipeline-prep-number {
-    color: #1D4ED8;
-    font-size: 0.68rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #E0F2FE;
+    color: #0369A1;
+    font-size: 0.72rem;
     font-weight: 800;
     text-transform: uppercase;
 }
 .pipeline-prep-title {
     color: #0F172A;
-    font-size: 0.76rem;
+    font-size: 0.9rem;
     font-weight: 800;
-    margin-top: 2px;
+    margin-top: 10px;
+    line-height: 1.3;
 }
 .pipeline-prep-note {
-    color: #64748B;
-    font-size: 0.68rem;
-    line-height: 1.4;
-    margin-top: 3px;
+    color: #475569;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    margin-top: 10px;
 }
 .pipeline-prep-arrow {
-    align-self: center;
-    color: #60A5FA;
-    font-size: 0.85rem;
+    flex: 0 0 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563EB;
+    font-size: 1.1rem;
 }
 .pipeline-output {
     border: 1px solid #A7F3D0;
@@ -1311,10 +1324,13 @@ def build_probability_calculation_html(primary_algo, scaled_amt, scaled_time, pr
         return f"""
 <div class="pipeline-formula">
     <strong>Cách tính Random Forest:</strong><br>
-    Mỗi cây trả về một xác suất p<sub>i</sub>. Kết quả là trung bình của {len(tree_probs)} cây.<br>
-    p = (p<sub>1</sub> + ... + p<sub>{len(tree_probs)}</sub>) / {len(tree_probs)}
+    Mỗi cây trong rừng đưa ra một xác suất Fraud p<sub>i</sub> dựa trên cùng một hàng dữ liệu đầu vào.<br>
+    Kết quả cuối cùng là trung bình của {len(tree_probs)} cây:<br>
+    p = (p<sub>1</sub> + ... + p<sub>{len(tree_probs)}</sub>) / {len(tree_probs)}<br>
       = <strong>{calculated_prob:.6f} = {calculated_prob * 100:.2f}%</strong><br>
-    5 cây đầu: [{preview}, ...]
+    <span style="font-size:0.82rem; color:#475569;"><b>Trong đó:</b> p<sub>i</sub> là xác suất Fraud của cây i.</span><br>
+    5 cây đầu:
+    <span style="font-size:0.82rem; color:#475569;">[{preview}, ...]</span>
 </div>"""
 
     if primary_algo == "Decision Tree":
@@ -1328,10 +1344,11 @@ def build_probability_calculation_html(primary_algo, scaled_amt, scaled_time, pr
         return f"""
 <div class="pipeline-formula">
     <strong>Cách tính Decision Tree:</strong><br>
-    Giao dịch đi đến nút lá #{leaf_id}. Xác suất là tỷ lệ Fraud tại nút lá.<br>
-    p = Fraud / (Normal + Fraud)
-      = {fraud_weight:.6f} / ({normal_weight:.6f} + {fraud_weight:.6f})
-      = <strong>{calculated_prob:.6f} = {calculated_prob * 100:.2f}%</strong>
+    Dòng dữ liệu đi đến nút lá #{leaf_id}. Tại nút lá đó, xác suất Fraud được tính theo tỷ lệ:<br>
+    p = Fraud / (Normal + Fraud)<br>
+      = {fraud_weight:.6f} / ({normal_weight:.6f} + {fraud_weight:.6f})<br>
+      = <strong>{calculated_prob:.6f} = {calculated_prob * 100:.2f}%</strong><br>
+    <span style="font-size:0.82rem; color:#475569;"><b>Trong đó:</b> Fraud/Normal là số mẫu từng lớp trong nút lá.</span>
 </div>"""
 
     if primary_algo == "Logistic Regression":
@@ -1345,12 +1362,15 @@ def build_probability_calculation_html(primary_algo, scaled_amt, scaled_time, pr
         return f"""
 <div class="pipeline-formula">
     <strong>Cách tính Logistic Regression:</strong><br>
-    z = hệ số chặn + tổng(giá trị biến × trọng số)
-      = {intercept:.6f} + Σ(x<sub>i</sub> × w<sub>i</sub>)
+    Tính điểm z từ tổng trọng số của biến:<br>
+    z = intercept + Σ(x<sub>i</sub> × w<sub>i</sub>)<br>
+      = {intercept:.6f} + Σ(x<sub>i</sub> × w<sub>i</sub>)<br>
       = <strong>{score:.6f}</strong><br>
-    p = 1 / (1 + e<sup>-z</sup>)
+    <span style="font-size:0.82rem; color:#475569;"><b>Trong đó:</b> z là điểm số nội bộ, Σ(x<sub>i</sub> × w<sub>i</sub>) là tổng tích có trọng số của các biến.</span><br>
+    Sau đó áp dụng sigmoid để ra xác suất:<br>
+    p = 1 / (1 + e<sup>-z</sup>)<br>
       = <strong>{calculated_prob:.6f} = {calculated_prob * 100:.2f}%</strong><br>
-    5 đóng góp lớn nhất vào z: [{preview}]
+    <span style="font-size:0.82rem; color:#475569;"><b>Trong đó:</b> 5 biến ảnh hưởng mạnh nhất: [{preview}]</span>
 </div>"""
 
     clipped_prob = float(np.clip(prob_val, 1e-12, 1 - 1e-12))
@@ -1358,9 +1378,11 @@ def build_probability_calculation_html(primary_algo, scaled_amt, scaled_time, pr
     return f"""
 <div class="pipeline-formula">
     <strong>Cách tính 1D-CNN:</strong><br>
-    30 giá trị đi qua các lớp của mạng để tạo điểm z = <strong>{score:.6f}</strong>.<br>
-    p = sigmoid(z) = 1 / (1 + e<sup>-z</sup>)
-      = <strong>{prob_val:.6f} = {prob_val * 100:.2f}%</strong>
+    30 giá trị đầu vào được xử lý qua các lớp tích chập và kết nối để sinh điểm z.<br>
+    Sau đó, hàm sigmoid chuyển điểm z thành xác suất Fraud:<br>
+    p = 1 / (1 + e<sup>-z</sup>)<br>
+      = <strong>{prob_val:.6f} = {prob_val * 100:.2f}%</strong><br>
+    <span style="font-size:0.82rem; color:#475569;"><b>Trong đó:</b> z là logit nội bộ, dùng để biểu diễn độ nghi ngờ Fraud trước khi chuẩn hóa thành xác suất.</span>
 </div>"""
 
 def render_realtime_pipeline(primary_algo, scaled_amt, scaled_time):
@@ -1433,20 +1455,32 @@ VALUES
 <div class="pipeline-prep-flow">
     <div class="pipeline-prep-card">
         <div class="pipeline-prep-number">Chặng 1</div>
-        <div class="pipeline-prep-title">Nhận dữ liệu gốc</div>
-        <div class="pipeline-prep-note">Đọc Amount, Time và 28 tín hiệu V1 - V28.</div>
+        <div class="pipeline-prep-title">Tiếp nhận dữ liệu ban đầu</div>
+        <div class="pipeline-prep-note">Nhận 30 giá trị đầu vào: Amount, Time và 28 đặc trưng ẩn V1–V28.</div>
     </div>
     <div class="pipeline-prep-arrow"><i class="fa-solid fa-chevron-right"></i></div>
     <div class="pipeline-prep-card">
         <div class="pipeline-prep-number">Chặng 2</div>
-        <div class="pipeline-prep-title">Đổi Amount và Time</div>
-        <div class="pipeline-prep-note">Chuyển 2 giá trị này về mức lệch so với lịch sử.</div>
+        <div class="pipeline-prep-title">Chuẩn hóa Amount và Time</div>
+        <div class="pipeline-prep-note">Đổi Amount và Time thành scaled_amount / scaled_time theo trung bình và độ lệch chuẩn lịch sử.</div>
     </div>
     <div class="pipeline-prep-arrow"><i class="fa-solid fa-chevron-right"></i></div>
     <div class="pipeline-prep-card">
         <div class="pipeline-prep-number">Chặng 3</div>
-        <div class="pipeline-prep-title">Ghép hàng dữ liệu mới</div>
-        <div class="pipeline-prep-note">Xếp 2 giá trị đã đổi trước V1 - V28 để đưa vào mô hình.</div>
+        <div class="pipeline-prep-title">Ghép hàng dữ liệu cuối cùng</div>
+        <div class="pipeline-prep-note">Xếp scaled_amount và scaled_time trước, sau đó nối V1–V28 để tạo vector 30 chiều cho mô hình.</div>
+    </div>
+    <div class="pipeline-prep-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+    <div class="pipeline-prep-card">
+        <div class="pipeline-prep-number">Chặng 4</div>
+        <div class="pipeline-prep-title">Tính xác suất gian lận</div>
+        <div class="pipeline-prep-note">Đưa vector 30 chiều vào mô hình SMOTE đã huấn luyện để sinh xác suất Fraud.</div>
+    </div>
+    <div class="pipeline-prep-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+    <div class="pipeline-prep-card">
+        <div class="pipeline-prep-number">Chặng 5</div>
+        <div class="pipeline-prep-title">Ra quyết định và lưu nhật ký</div>
+        <div class="pipeline-prep-note">So sánh xác suất với ngưỡng, xác định Normal/Fraud và ghi lại kết quả.</div>
     </div>
 </div>
 
@@ -1490,16 +1524,34 @@ VALUES
             <div class="inference-mini-card">
                 <strong>Amount ($)</strong><br>
                 Hiện tại: <strong>${st.session_state.amount_val:.2f}</strong><br>
+                Công thức: <em>scaled_amount</em> = (Amount - mean) / std.<br>
                 Tính: ({st.session_state.amount_val:.2f} - {amount_mean:.2f}) / {amount_scale:.2f}<br>
-                Kết quả: <strong>{scaled_amt:.6f}</strong>
-                <span style="color: #64748B;">({amount_position})</span>
+                Kết quả: <strong>{scaled_amt:.6f}</strong> <span style="color: #64748B;">({amount_position})</span>
+                <div style="margin-top: 10px; font-size: 0.78rem; color: #475569; line-height: 1.6;">
+                    <strong>Chú thích:</strong>
+                    <ul style="margin: 6px 0 0 18px; padding: 0; list-style: disc; font-size: 0.78rem;">
+                        <li><em>Amount</em>: số tiền giao dịch thực tế.</li>
+                        <li><em>mean</em>: giá trị trung bình của Amount trong dữ liệu huấn luyện.</li>
+                        <li><em>std</em>: độ lệch chuẩn cho biết mức dao động của Amount.</li>
+                        <li><em>scaled_amount</em>: giá trị chuẩn hóa của Amount</li>
+                    </ul>
+                </div>
             </div>
             <div class="inference-mini-card">
                 <strong>Time (giây)</strong><br>
                 Hiện tại: <strong>{st.session_state.time_val:.1f}</strong><br>
+                Công thức: <em>scaled_time</em> = (Time - mean) / std.<br>
                 Tính: ({st.session_state.time_val:.1f} - {time_mean:.1f}) / {time_scale:.1f}<br>
-                Kết quả: <strong>{scaled_time:.6f}</strong>
-                <span style="color: #64748B;">({time_position})</span>
+                Kết quả: <strong>{scaled_time:.6f}</strong> <span style="color: #64748B;">({time_position})</span>
+                <div style="margin-top: 10px; font-size: 0.78rem; color: #475569; line-height: 1.6;">
+                    <strong>Chú thích:</strong>
+                    <ul style="margin: 6px 0 0 18px; padding: 0; list-style: disc; font-size: 0.78rem;">
+                        <li><em>Time</em>: thời điểm giao dịch tính bằng giây kể từ giao dịch đầu tiên trong dữ liệu.</li>
+                        <li><em>mean</em>: giá trị trung bình của Time trong dữ liệu huấn luyện.</li>
+                        <li><em>std</em>: độ lệch chuẩn cho biết mức dao động của Time.</li>
+                        <li><em>scaled_time</em>: giá trị chuẩn hóa của Time, cho biết giao dịch này xa hay gần so với thời gian trung bình.</li>
+                    </ul>
+                </div>
             </div>
         </div>
         <div class="pipeline-formula">
