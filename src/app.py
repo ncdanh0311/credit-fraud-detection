@@ -1076,12 +1076,73 @@ else:
 def render_shap_feature_explanations(top_features):
     """Gộp biểu đồ và giải thích SHAP thành một bảng xếp hạng ngắn gọn."""
     max_abs_shap = max(float(top_features["Absolute_SHAP"].max()), 1e-12)
+    
+    FEATURE_LABELS = {
+        "scaled_amount": "Amount - Số tiền",
+        "scaled_time": "Time - Thời điểm",
+        "V14": "V14 - Độ bảo mật tài khoản",
+        "V12": "V12 - Độ an toàn thẻ thanh toán",
+        "V10": "V10 - Độ tin cậy giao dịch",
+        "V4": "V4 - Tần suất giao dịch dồn dập",
+        "V17": "V17 - Đặc điểm thiết bị/địa điểm",
+        "V11": "V11 - Danh mục tiêu dùng rủi ro",
+        "V3": "V3 - Lịch sử uy tín tài khoản",
+        "V7": "V7 - Lưu lượng giao dịch bất thường",
+        "V16": "V16 - Kênh thanh toán/Đối tác",
+        "V2": "V2 - Số lượng yêu cầu/lần thử",
+        "V18": "V18 - Hạn mức/Quy mô giao dịch",
+        "V1": "V1 - Đặc trưng vị trí địa lý",
+        "V9": "V9 - Hành vi truy cập hệ thống",
+        "V25": "V25 - Tín hiệu mạng/IP giao dịch",
+        "V22": "V22 - Phiên đăng nhập/Trình duyệt",
+        "V8": "V8 - Trạng thái xác thực thẻ",
+    }
+    
+    def get_friendly_explanation(feature_name, val, shap_val):
+        is_risk_up = shap_val > 0
+        if feature_name == "scaled_amount":
+            amt = st.session_state.amount_val
+            if amt > 500:
+                return f"Số tiền giao dịch lớn (${amt:.2f}), vượt xa mức bình thường ($22.75). Điều này làm tăng sự bất thường và đẩy rủi ro gian lận lên."
+            else:
+                return f"Số tiền giao dịch nhỏ (${amt:.2f}), nằm gần mức bình thường ($22.75). Đây là tín hiệu an toàn giúp giảm rủi ro."
+        elif feature_name == "scaled_time":
+            time_val = st.session_state.time_val
+            return f"Thời điểm giao dịch ({time_val:.1f} giây) được sử dụng để phân tích quy luật thời gian của hành vi."
+        
+        # Check hidden features
+        v_num_str = feature_name.replace("V", "")
+        if v_num_str.isdigit():
+            v_idx = int(v_num_str)
+            baselines = {14: -0.50, 12: -3.30, 10: -0.10, 4: 1.15}
+            if v_idx in baselines:
+                base = baselines[v_idx]
+                if v_idx == 4:
+                    if val > 3.0:
+                        return f"Chỉ số tần suất V4 là {val:.2f} (tăng cao so với mốc {base:.2f}), báo hiệu tần suất giao dịch dồn dập đáng nghi, đẩy rủi ro lên."
+                    else:
+                        return f"Chỉ số tần suất V4 là {val:.2f} (gần mốc bình thường {base:.2f}), cho thấy tần suất bình thường, giúp giảm rủi ro."
+                else: # V14, V12, V10
+                    if val < (base - 1.5):
+                        return f"Chỉ số bảo mật V{v_idx} tụt sâu xuống {val:.2f} (thấp hơn nhiều so với mốc an toàn {base:.2f}), nghi ngờ rò rỉ thông tin thẻ hoặc thiết bị lạ, đẩy rủi ro lên."
+                    else:
+                        return f"Chỉ số bảo mật V{v_idx} là {val:.2f} (gần mốc an toàn {base:.2f}), phản ánh trạng thái bình thường, kéo rủi ro xuống."
+            
+            # General V features
+            if is_risk_up:
+                return f"Chỉ số V{v_idx} có giá trị {val:.2f} lệch khỏi trạng thái ổn định thông thường, được AI nhận định là dấu hiệu bất thường làm tăng rủi ro."
+            else:
+                return f"Chỉ số V{v_idx} có giá trị {val:.2f} nằm trong tầm kiểm soát an toàn, góp phần kéo giảm rủi ro."
+                
+        return f"Chỉ số {feature_name} có giá trị {val:.2f}."
+
     rows = []
     for rank, (_, row) in enumerate(top_features.iterrows(), start=1):
         feature = str(row["Feature"])
         value = float(row["Value"])
         shap_value = float(row["SHAP"])
         abs_shap = abs(shap_value)
+        
         if shap_value > 0:
             direction = "Tăng rủi ro (đẩy rủi ro lên)"
             direction_color = "#DC2626"
@@ -1095,14 +1156,13 @@ def render_shap_feature_explanations(top_features):
             direction_color = "#64748B"
             bar_color = "#94A3B8"
 
+        display_name = FEATURE_LABELS.get(feature, f"{feature} - Chỉ số ẩn danh")
+
         if feature == "scaled_amount":
-            display_name = "Amount - Số tiền"
-            value_text = f"${st.session_state.amount_val:.2f} → sau chuẩn hóa: {value:.4f}"
+            value_text = f"${st.session_state.amount_val:.2f} (chuẩn hóa: {value:.4f})"
         elif feature == "scaled_time":
-            display_name = "Time - Thời điểm"
-            value_text = f"{st.session_state.time_val:.1f} giây → sau chuẩn hóa: {value:.4f}"
+            value_text = f"{st.session_state.time_val:.1f}s (chuẩn hóa: {value:.4f})"
         else:
-            display_name = feature
             value_text = f"{value:.4f}"
 
         bar_width = abs_shap / max_abs_shap * 100
@@ -1126,24 +1186,33 @@ def render_shap_feature_explanations(top_features):
         </div>
     </div>"""
 
+        friendly_exp = get_friendly_explanation(feature, value, shap_value)
         rows.append(f"""
-<div class="shap-ranking-row">
-    <div>
-        <div class="shap-ranking-feature">#{rank} {html.escape(display_name)}</div>
-        <div class="shap-ranking-value">Giá trị: {html.escape(value_text)}</div>
+<div class="shap-ranking-row" style="display: block; border-bottom: 1px solid #F1F5F9; padding: 10px 12px; background: {'#FEF2F2' if shap_value > 0 else '#ECFDF5'}; margin-bottom: 6px; border-radius: 6px;">
+    <div style="display: grid; grid-template-columns: 1.2fr 2fr 1.5fr; align-items: center; gap: 10px; margin-bottom: 6px;">
+        <div>
+            <div class="shap-ranking-feature" style="font-size: 0.78rem; font-weight: bold; color: #1E293B;">#{rank} {html.escape(display_name)}</div>
+            <div class="shap-ranking-value" style="font-size: 0.7rem; color: #64748B; margin-top: 1px;">Giá trị thực: {html.escape(value_text)}</div>
+        </div>
+        <div class="shap-ranking-track">{bar_html}</div>
+        <div class="shap-ranking-effect" style="text-align: right;">
+            <span style="background-color: {'#FEE2E2' if shap_value > 0 else '#D1FAE5'}; color: {direction_color}; padding: 3px 6px; border-radius: 4px; font-weight: bold; font-size: 0.65rem;">
+                {direction}
+            </span>
+        </div>
     </div>
-    <div class="shap-ranking-track">{bar_html}</div>
-    <div class="shap-ranking-effect">
-        <strong style="color: {direction_color};">{direction}</strong>
+    <div style="font-size: 0.74rem; color: #475569; padding: 6px 8px; background: #FFFFFF; border-radius: 4px; border-left: 3px solid {direction_color}; margin-top: 4px; line-height: 1.45; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);">
+        <strong>Lý giải của AI:</strong> {friendly_exp}
     </div>
 </div>""")
 
     st.markdown("""
-<p class="shap-caption">
-    Mỗi thanh cho biết một biến đang kéo kết quả về phía giảm hoặc tăng rủi ro. Thanh càng dài thì tác động càng lớn.
-    V1 - V28 là các chỉ số ẩn; chỉ cần đọc hướng và độ dài của thanh.
-</p>
+<div style="background-color: #F8FAFC; border-left: 4px solid #64748B; padding: 8px 12px; margin-bottom: 12px; border-radius: 4px; font-size: 0.75rem; color: #475569; line-height: 1.45;">
+    <strong>💡 Hướng dẫn nhanh:</strong> Bảng dưới xếp hạng 5 biến số có tác động mạnh nhất đến quyết định của mô hình AI cho giao dịch này. 
+    Các thanh màu đỏ đại diện cho các yếu tố đẩy rủi ro lên (hướng gian lận). Các thanh màu xanh đại diện cho các yếu tố kéo rủi ro xuống (hướng an toàn).
+</div>
 """, unsafe_allow_html=True)
+
     st.markdown(f"""
 <div class="shap-ranking">
     <div class="shap-ranking-header">
@@ -1186,14 +1255,34 @@ def build_reference_comparison_html():
 </tr>""")
 
     return f"""
-<div style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; color: #1E3A8A; font-size: 0.75rem; line-height: 1.5; margin-bottom: 7px; padding: 9px 11px;">
-    <strong>Mốc tham khảo là gì?</strong> Đây là các trị số trung vị thống kê từ các giao dịch <strong>an toàn (bình thường)</strong> trong lịch sử:<br>
-    • <strong>Amount (Số tiền):</strong> Mốc trung vị giao dịch an toàn là <strong>$22.75</strong>. Nếu vượt quá $500 sẽ báo động <em>Cao bất thường</em>.<br>
-    • <strong>V14, V12, V10 (Chỉ số ẩn):</strong> Thường liên quan đến độ bảo mật thẻ/tài khoản. Nếu <strong>Giảm sâu</strong> (âm lớn), nguy cơ gian lận sẽ <strong>tăng vọt</strong>.<br>
-    • <strong>V4 (Chỉ số ẩn):</strong> Thường phản ánh tần suất giao dịch dồn dập. Nếu <strong>Tăng cao</strong> (dương lớn), giao dịch có dấu hiệu bất thường.<br>
-    <span style="font-style: italic; color: #4B5563;">*Bảng này chỉ phục vụ đối chiếu trực quan nhanh độ lệch chuẩn, không tham gia trực tiếp tính xác suất của mô hình.</span>
+<div style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; color: #1E3A8A; font-size: 0.82rem; line-height: 1.6; margin-bottom: 12px; padding: 12px 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <h5 style="margin-top: 0; margin-bottom: 8px; color: #1D4ED8; font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+        <i class="fa-solid fa-circle-question"></i> Tại sao cần Mốc Tham Khảo (Baseline)?
+    </h5>
+    <p style="margin: 0 0 10px 0;">
+        Giống như trong y tế, bác sĩ cần biết <strong>nhịp tim chuẩn lúc nghỉ ngơi</strong> (ví dụ: 60 - 100 nhịp/phút) để đánh giá nhịp tim hiện tại của bạn có bất thường hay không. 
+        Trong hệ thống AI phát hiện gian lận của chúng tôi:
+    </p>
+    <div style="display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 12px; padding-left: 10px; border-left: 3px solid #60A5FA;">
+        <div>
+            <strong>1. Mốc tham khảo là gì?</strong> Đây là giá trị <strong>trung vị thống kê</strong> thu thập từ hàng chục ngàn giao dịch <strong>hợp lệ, an toàn</strong> trong lịch sử. Nó đại diện cho một giao dịch "bình thường".
+        </div>
+        <div>
+            <strong>2. Mục đích đối chiếu:</strong> Khi một giao dịch mới xảy ra, AI sẽ đo lường mức độ <strong>lệch chuẩn</strong> của giao dịch này so với mốc an toàn. Khoảng cách lệch càng lớn, độ nghi ngờ rò rỉ tài khoản hay hành vi gian lận càng cao.
+        </div>
+    </div>
+    <div style="background-color: #DBEAFE; border-radius: 6px; padding: 10px 12px; font-size: 0.78rem; color: #1E40AF; border: 1px dashed #93C5FD;">
+        <strong>💡 Ví dụ thực tế từ bảng dưới:</strong>
+        <ul style="margin: 4px 0 0 18px; padding: 0; list-style-type: disc;">
+            <li><strong>Amount (Số tiền):</strong> Giao dịch thông thường chỉ khoảng <strong>$22.75</strong>. Nếu giao dịch hiện tại là <strong>$500.00</strong>, việc vượt mốc tham khảo này sẽ khiến AI nâng mức cảnh báo nguy cơ.</li>
+            <li><strong>V14 (Chỉ số bảo mật ẩn):</strong> Giao dịch an toàn có chỉ số V14 quanh mức <strong>-0.50</strong>. Nếu ở giao dịch này V14 bị <strong>giảm sâu xuống -2.97</strong>, hệ thống phát hiện đây là điểm bất thường nghiêm trọng (nghi ngờ thiết bị lạ hoặc chiếm đoạt thẻ).</li>
+        </ul>
+    </div>
+    <div style="font-size: 0.72rem; color: #6B7280; margin-top: 8px; font-style: italic;">
+        * Lưu ý: Bảng đối chiếu dưới đây giúp kiểm soát viên hiểu rõ trực quan vì sao giao dịch bị nghi ngờ, còn các chỉ số thực tế sẽ được chuẩn hóa trước khi đưa vào mô hình AI tính toán xác suất.
+    </div>
 </div>
-<div style="background-color: #ffffff; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+<div style="background-color: #ffffff; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 10px;">
     <table style="width: 100%; border-collapse: collapse; font-size: 0.76rem; text-align: left; color: #374151;">
         <thead>
             <tr style="background-color: #F8FAFC; border-bottom: 2px solid #E5E7EB; color: #4B5563; font-weight: bold;">
@@ -2119,11 +2208,18 @@ with col_right:
 
             if shap_error is None and shap_values is not None:
                 st_shap(shap.force_plot(base_val, shap_values[0], cur_processed_df), height=135)
-                st.markdown("""
-                    <p style="font-size: 0.74rem; color: #6B7280; margin-top: 2px; margin-bottom: 8px; font-style: italic;">
-                        Bắt đầu từ mức rủi ro tham chiếu: lực màu đỏ đẩy kết quả về phía rủi ro,
-                        lực màu xanh kéo kết quả về phía an toàn. Độ dài thể hiện mức ảnh hưởng.
-                    </p>
+                st.markdown(f"""
+                    <div style="background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; color: #78350F; font-size: 0.78rem; line-height: 1.5; margin-top: 4px; margin-bottom: 12px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                        <strong style="color: #D97706; display: flex; align-items: center; gap: 6px; font-size: 0.82rem; margin-bottom: 4px;">
+                            <i class="fa-solid fa-bolt"></i> Hướng dẫn đọc biểu đồ lực tác động (SHAP Force Plot):
+                        </strong>
+                        <ul style="margin: 4px 0 0 16px; padding: 0; list-style-type: disc;">
+                            <li><strong>Mức xuất phát (Base Value):</strong> Xác suất rủi ro trung bình ban đầu (quanh mốc {base_val:.2f}) trước khi xét các thuộc tính của giao dịch này.</li>
+                            <li><strong>Lực đẩy màu đỏ (<span style="color:#DC2626; font-weight:bold;">higher</span>):</strong> Các chỉ số bất thường đang ra sức <strong>đẩy</strong> xác suất rủi ro gian lận lên cao hơn.</li>
+                            <li><strong>Lực kéo màu xanh (<span style="color:#2563EB; font-weight:bold;">lower</span>):</strong> Các chỉ số ổn định đang ra sức <strong>níu</strong> rủi ro về mức thấp an toàn.</li>
+                            <li><strong>Xác suất cuối cùng (f(x) - màu đậm):</strong> Kết quả sau khi cộng trừ các lực kéo co, ở đây là <strong>{cur_prob:.2%}</strong>.</li>
+                        </ul>
+                    </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown("<div style='height: 135px; background: #F9FAFB; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#9CA3AF; font-size:0.8rem; margin-bottom:8px;'>SHAP Force Plot không khả dụng</div>", unsafe_allow_html=True)
